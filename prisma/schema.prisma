@@ -12,3 +12,21 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Place {
+  id String  @id @default(uuid())
+  name String
+  type String
+  description String
+  coordinates Json
+  contacts  Json
+  images Images[]
+  
+}
+ 
+model Images{
+  id String  @id @default(uuid())
+  linkImage String
+  IdPlace String
+  place Place @relation(fields: [IdPlace],references: [id])  
+}
