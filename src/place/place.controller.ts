@@ -1,4 +1,13 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import { PlaceService } from './place.service';
 
 @Controller('place')
-export class PlaceController {}
+export class PlaceController {
+
+    constructor(private placeService: PlaceService){}
+
+    @Get()
+    findAll(){
+        return this.placeService.findAll()
+    }
+}
