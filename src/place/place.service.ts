@@ -13,4 +13,12 @@ export class PlaceService {
         return this.prisma.place.findMany()
     }
 
+    async findAllFromType(type: string): Promise<Place[]> {
+        return this.prisma.place.findMany({
+            where: {
+                type
+            }
+        })
+    }
+
 }
