@@ -22,7 +22,6 @@ model Place {
   contacts  Json
   logo String
   images String[]
-
 }
  
   

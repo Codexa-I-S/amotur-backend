@@ -1,14 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { PlaceService } from './place.service';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { createplaceDto } from './place.dto';
 
 @Controller('place')
 export class PlaceController {
 
     constructor(private placeService: PlaceService){}
 
-    @Put()
-    crete(@Body() data: any) {
+    @Post()
+    crete(@Body() data: createplaceDto) {
         return this.placeService.create(data)
     }
 
@@ -30,8 +31,8 @@ export class PlaceController {
     }
 
     @Put(':id')
-    update(@Param('id') id: string, @Body() date:any) {
-        return this.placeService.update(id, date)
+    update(@Param('id') id: string, @Body() data:any) {
+        return this.placeService.update(id, data)
     }
 
     @Delete(':id')
@@ -39,3 +40,5 @@ export class PlaceController {
         return this.placeService.remove(id)
     }
 }
+
+
