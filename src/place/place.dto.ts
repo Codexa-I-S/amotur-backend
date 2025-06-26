@@ -1,15 +1,31 @@
 import { ApiProperty } from "@nestjs/swagger"
 import { PartialType } from "@nestjs/swagger"
-import { IsArray, IsNotEmpty, IsObject, IsString, IsUrl } from "class-validator"
+import { Type } from "class-transformer";
+import { IsArray, IsEmail, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUrl, ValidateNested } from "class-validator"
 
-type images = string[]
+class Coordinates {
 
-type coordenadas = {
-lat: number
-lon: number
+  @IsNumber()
+  lat: number;
+
+  @IsNumber()
+  lon: number
+
 }
 
-type contacts = {}
+export class contacts {
+  @IsOptional()
+  @IsString()
+  telefone?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsUrl()
+  site?: string;
+}
 export class createplaceDto {
   @ApiProperty({example:"luar do sertão",description:"nome do lugar"})
   @IsString({ message: "O nome deve ser uma string" })
@@ -27,23 +43,25 @@ export class createplaceDto {
   description: string;
 
   @ApiProperty({example:{"lat":-52525,"lon":5213566},description:"coordenadas do lugar"})
-  @IsObject()
-  coordinates: coordenadas ;
+  @ValidateNested()
+  @Type(()=>Coordinates)
+  coordinates: Coordinates;
 
   @ApiProperty({example:{"telefone":"(88)8888888","site":"www.luardosertao.com.br","email":"luardosertao@email.com"},description:"contatos do lugar"})
-  @IsObject()
+  @ValidateNested()
+  @Type(()=>contacts)
   contacts: contacts;
 
-  @ApiProperty({example:"http://luarDoSertao/logo.png",description:"logo do lugar"})
+  @ApiProperty({example:"http://luarDoSertao.com/logo.png",description:"logo do lugar"})
   @IsString({ message: "O link da logo deve ser uma string" })
-  @IsUrl({},{message:"Deve ser uma  url"})
+  @IsUrl({},{message:"A logo deve ser uma  url"})
   logo: string 
 
   @ApiProperty({example:["http://img1.jpg","http://img2.jpg","http://img3.jpg"],description:"imagens do lugar"})
   @IsArray()
   @IsString({each: true, message: "Cada link de imagem deve ser uma string" }) 
   @IsNotEmpty({each:true, message:"Cada link deve ser obrigatório"})
-  images: images
+  images: string[]
 }
 
 export class updateplaceDto extends PartialType(createplaceDto)   {}

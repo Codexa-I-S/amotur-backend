@@ -24,4 +24,5 @@ model Place {
   images String[]
 }
  
+
   
