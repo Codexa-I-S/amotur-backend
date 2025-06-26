@@ -18,7 +18,7 @@ model Place {
   name String
   type String
   description String
-  coordinates Json
+  coordinates Json @unique
   contacts  Json
   logo String
   images String[]

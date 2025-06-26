@@ -18,9 +18,10 @@ export class PlaceService {
     }
 
     async findAllFromType(type: string): Promise<Place[]> {
+        const types = type.split(','); // Divide a string em um array
         return this.prisma.place.findMany({
             where: {
-                type
+                type:{in:types}
             }
         })
     }
