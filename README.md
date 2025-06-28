@@ -27,6 +27,10 @@ Vá no arquvio .env.example e altere as variáveis e apague a extensão .example
 npm run docker:compose
 ```
 #### Instalar as tabelas
+Primeiro precisa gerenciar a ponte entre o código e banco de dados:
+```bash
+npm run prisma:generate
+```
 criando as tabelas:
 ```bash
 npm run prisma:create
