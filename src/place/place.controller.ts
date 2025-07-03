@@ -1,5 +1,12 @@
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { PlaceService } from './place.service';
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { updateplaceDto } from './place.dto';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { extname } from 'path';
+import { UploadService } from 'src/upload/upload.service';
+import { diskStorage } from 'multer';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { createplaceDto, updateplaceDto } from './place.dto';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
@@ -9,18 +16,70 @@ import { AdminGuard } from 'src/auth/admin.guard';
 @Controller('place')
 export class PlaceController {
 
-    constructor(private placeService: PlaceService){}
+    constructor(private placeService: PlaceService, private uploadService:UploadService){}
     
     @UseGuards(AdminGuard)
     @Post()
     @ApiOperation({summary: 'Cria um local'})
     @ApiResponse({status:201, description: "Local criado com sucesso!!"})
     @ApiResponse({status:400, description: "Dados inválidos"})
-    @ApiBody({type:createplaceDto})
-    @HttpCode(HttpStatus.CREATED)
-    crete(@Body() data: createplaceDto) {
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+            description: 'Cria um local',
+            schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string', example: 'luar Do Sertão' },
+                type: { type: 'string', example: 'Pousada' },
+                description: { type: 'string', example: 'A melhor pousada' },
+                coordinates: { type: 'string', example: {"lat":1236363,"lon":-4253674} },
+                contacts: { type: 'string', example: {"telefone":"(88)9458484247","email":"luardosertao@gamil.com","site":"www.luardoSertao.com"} },
+                logo: { type: 'string', format: 'binary' },
+                photos: {
+                type: 'array',
+                items: { type: 'string', format: 'binary' },
+                },
+            },
+            required: ['name','type', 'description','coordinates', 'contacts', 'logo', 'photos' ],
+            },
+        })
+        @UseInterceptors(
+            AnyFilesInterceptor({
+            storage: diskStorage({
+                destination: './uploads',
+                filename: (req, file, cb) => {
+                const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                cb(null, unique + extname(file.originalname));
+                },
+            }),
+            limits: {
+                fileSize: 500 * 1024, // 500kb
+            },
+            }),
+        )  
+    async createPlace(@UploadedFiles() files: Array<Express.Multer.File>,@Body() body: any,) {
         try {
-            return this.placeService.create(data)
+            const logoFile = files.find((file) => file.fieldname === 'logo');
+            const photoFiles = files.filter((file) => file.fieldname === 'photos');
+            // Aqui você pode fazer o upload (ex: Cloudinary) e salvar no banco
+            if(!logoFile){
+                throw new BadRequestException('Logo é obrigatória');
+            }
+            const logoUrl = await this.uploadService.uploadImage(logoFile.path);
+            if(!logoUrl){
+                throw new BadRequestException('Logo é obrigatória');
+            }
+            const uploadedImages = await Promise.all(photoFiles.map(f => this.uploadService.uploadImage(f.path)));
+            const photoUrls = uploadedImages.filter((url): url is string => !!url);
+            return this.placeService.create({
+                name: body.name,
+                type: body.type,
+                description: body.description,
+                coordinates: JSON.parse(body.coordinates),
+                contacts: JSON.parse(body.contacts),
+                logo: logoUrl,
+                images: photoUrls,
+            })
         } catch (error) {
             throw new HttpException('Dados inválidos', HttpStatus.BAD_REQUEST);
         }

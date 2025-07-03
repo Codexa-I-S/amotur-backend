@@ -39,7 +39,7 @@ export class PlaceService {
             where: {
                 type:{in:types}
             }
-        })
+        }) 
     }
 
     async update(id: string, dto:updateplaceDto): Promise<Place | null> {
