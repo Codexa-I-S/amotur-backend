@@ -1,6 +1,6 @@
 import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, UploadedFiles, UseInterceptors, UseGuards  } from '@nestjs/common';
 import { PlaceService } from './place.service';
-import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { extname } from 'path';
 import { UploadService } from 'src/upload/upload.service';
@@ -9,12 +9,14 @@ import { createplaceDto, updateplaceDto } from './place.dto';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { AdminGuard } from 'src/auth/admin.guard';
 
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('place')
 export class PlaceController {
 
     constructor(private placeService: PlaceService, private uploadService:UploadService){}
     
+    @ApiBearerAuth()
     @UseGuards(AdminGuard)
     @Post()
     @ApiOperation({summary: 'Cria um local'})
@@ -82,6 +84,7 @@ export class PlaceController {
         }
     }
 
+    @ApiBearerAuth()
     @Get('all')
     @ApiOperation({summary: 'Listar Todos os locais'})
     @ApiResponse({status:200, description: "Lista de locais retornada com sucesso!!"})
@@ -90,6 +93,7 @@ export class PlaceController {
         return this.placeService.findAll()
     }
 
+    @ApiBearerAuth()
     @Get()
     @ApiOperation({summary: 'Listar Todos os locais por tipo'})
     @ApiQuery({name:'type',type:String, description:'Tipo do local',example:"hotel,restaurante"})
@@ -105,6 +109,7 @@ export class PlaceController {
         }
     }
 
+    @ApiBearerAuth()
     @UseGuards(AdminGuard)
     @Put('id=:id')
     @ApiOperation({summary: 'Atualiza um local'})
@@ -121,6 +126,7 @@ export class PlaceController {
         }
     }
 
+    @ApiBearerAuth()
     @UseGuards(AdminGuard)
     @Delete('id=:id')
     @ApiOperation({summary: 'Deleta um local'})

@@ -9,6 +9,13 @@ async function bootstrap() {
     .setTitle('API do AMOTUR')
     .setDescription('Documentação do API do AMOTUR com NestJs + Prisma + Swagger')
     .setVersion('1.0')
+    .addBearerAuth({// Esquema JWT Bearer
+    type:'http',
+    scheme:'bearer',
+    bearerFormat:'JWT',
+    name:'Authorization',
+    in:'heaher'
+    })
     .build();
 
   const document = SwaggerModule.createDocument(app, config)
