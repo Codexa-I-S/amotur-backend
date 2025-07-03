@@ -1,13 +1,17 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { PlaceService } from './place.service';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { createplaceDto, updateplaceDto } from './place.dto';
+import { JwtAuthGuard } from 'src/auth/jwt.guard';
+import { AdminGuard } from 'src/auth/admin.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('place')
 export class PlaceController {
 
     constructor(private placeService: PlaceService){}
     
+    @UseGuards(AdminGuard)
     @Post()
     @ApiOperation({summary: 'Cria um local'})
     @ApiResponse({status:201, description: "Local criado com sucesso!!"})
@@ -45,6 +49,7 @@ export class PlaceController {
         }
     }
 
+    @UseGuards(AdminGuard)
     @Put('id=:id')
     @ApiOperation({summary: 'Atualiza um local'})
     @ApiResponse({status:201, description: "Local atualizado com sucesso!!"})
@@ -60,6 +65,7 @@ export class PlaceController {
         }
     }
 
+    @UseGuards(AdminGuard)
     @Delete('id=:id')
     @ApiOperation({summary: 'Deleta um local'})
     @ApiResponse({status:200, description: "Local deletado com sucesso!!"})
