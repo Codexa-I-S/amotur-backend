@@ -6,8 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { UploadModule } from './upload/upload.module';
 
 @Module({
-  imports: [PlaceModule, PrismaModule, UserModule, UploadModule],
-  imports: [PlaceModule, PrismaModule, AuthModule],
+  imports: [PlaceModule, PrismaModule, AuthModule, UploadModule],
   controllers: [],
   providers: []
 })
