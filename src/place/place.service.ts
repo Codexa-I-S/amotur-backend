@@ -42,6 +42,16 @@ export class PlaceService {
         }) 
     }
 
+    async findById(id: string): Promise<Place | null> {
+        const foundPlace = await this.prisma.place.findUnique({where:{id}})
+
+        if(!foundPlace) {
+            throw new NotFoundException(`Emprendimento com ID ${id} não encontrado!`)
+        }
+
+        return foundPlace
+    }    
+
     async update(id: string, dto:updateplaceDto): Promise<Place | null> {
         const foundId = await this.prisma.place.findUnique({where:{id}})
 

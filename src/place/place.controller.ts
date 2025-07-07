@@ -93,6 +93,11 @@ export class PlaceController {
         return this.placeService.findAll()
     }
 
+    @Get(':id')
+    findFromId(@Param('id') id: string) {
+        return this.placeService.findById(id)
+    }
+
     @ApiBearerAuth()
     @Get()
     @ApiOperation({summary: 'Listar Todos os locais por tipo'})
