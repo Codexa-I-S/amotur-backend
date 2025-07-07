@@ -92,8 +92,14 @@ export class PlaceController {
     findAll(){
         return this.placeService.findAll()
     }
-
-    @Get(':id')
+    
+    @ApiBearerAuth()
+    @Get('id=:id')
+    @ApiOperation({summary: 'Lista um local por id'})
+    @ApiResponse({status:200, description: "Local encotrado com sucesso!!"})
+    @ApiResponse({status:404, description:"Local não encontrado"})
+    @ApiParam({ name: 'id', type: String, description: 'Id do local',example:"4f4e7edf-2c82-4a43-ab47-d49ed9d0cb0a" })
+    @HttpCode(HttpStatus.OK)
     findFromId(@Param('id') id: string) {
         return this.placeService.findById(id)
     }

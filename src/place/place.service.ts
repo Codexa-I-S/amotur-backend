@@ -46,7 +46,7 @@ export class PlaceService {
         const foundPlace = await this.prisma.place.findUnique({where:{id}})
 
         if(!foundPlace) {
-            throw new NotFoundException(`Emprendimento com ID ${id} não encontrado!`)
+            throw new NotFoundException(`Local com ID ${id} não encontrado!`)
         }
 
         return foundPlace
