@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "postinstall": "npx prisma generate && npx prisma migrate deploy",
+    "postinstall": "npx prisma generate",
     "start": "nest start",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "docker:compose": "docker-compose up -d",
