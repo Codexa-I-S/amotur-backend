@@ -8,6 +8,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // para que process.env funcione em toda a aplicação
+    }),
     JwtModule.registerAsync({
       imports:[ConfigModule],
       inject:[ConfigService],
