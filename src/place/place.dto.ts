@@ -25,6 +25,10 @@ export class contacts {
   @IsOptional()
   @IsUrl()
   site?: string;
+
+  @IsOptional()
+  @IsUrl()
+  instagram?: string;
 }
 export class createplaceDto {
   @ApiProperty({example:"luar do sertão",description:"nome do lugar"})
@@ -47,7 +51,7 @@ export class createplaceDto {
   @Type(()=>Coordinates)
   coordinates: Coordinates;
 
-  @ApiProperty({example:{"telefone":"(88)8888888","site":"www.luardosertao.com.br","email":"luardosertao@email.com"},description:"contatos do lugar"})
+  @ApiProperty({example:{"telefone":"(88)8888888","site":"www.luardosertao.com.br","email":"luardosertao@email.com","instagram":"https://www.instagram.com/luardosertão/"},description:"contatos do lugar"})
   @ValidateNested()
   @Type(()=>contacts)
   contacts: contacts;
