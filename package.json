@@ -7,7 +7,6 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "preinstall": "apt-get update && apt-get install -y netcat",
     "postinstall": "npx prisma generate",
     "start": "nest start",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
