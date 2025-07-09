@@ -2,9 +2,22 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+
+import * as basicAuth from "express-basic-auth"
+
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const password = process.env.SWAGGER_PASSWORD || 'password';
 
+  app.use(
+    ['/api'],
+    basicAuth({
+      challenge:true,
+      users:{
+         "admin": password}
+    })
+  )
   const config = new DocumentBuilder()
     .setTitle('API do AMOTUR')
     .setDescription('Documentação do API do AMOTUR com NestJs + Prisma + Swagger')
