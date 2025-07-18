@@ -1,13 +1,16 @@
-import { Controller, Get, HttpCode, HttpStatus, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, UseGuards } from '@nestjs/common';
 import { MaresService } from './mares.service';
-import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/jwt.guard';
 
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('mares')
 export class MaresController {
 
   constructor(private readonly maresService: MaresService) {}
 
-
+    @ApiBearerAuth()
     @Get(':data')
     @ApiOperation({ summary: 'Dados de maré por data' })
     @ApiResponse({ status: 200, description: "Dados de maré encotrado com sucesso!!" })
