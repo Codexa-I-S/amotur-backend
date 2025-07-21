@@ -17,6 +17,7 @@ model Place {
   id String  @id @default(uuid())
   name String
   type String
+  localization String
   description String
   coordinates Json @unique
   contacts  Json

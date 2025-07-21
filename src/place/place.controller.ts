@@ -32,6 +32,7 @@ export class PlaceController {
             type: 'object',
             properties: {
                 name: { type: 'string', example: 'luar Do Sertão' },
+                localization: { type: 'string', example: 'amontada' },
                 type: { type: 'string', example: 'Pousada' },
                 description: { type: 'string', example: 'A melhor pousada' },
                 coordinates: { type: 'string', example: { "lat": 1236363, "lon": -4253674 } },

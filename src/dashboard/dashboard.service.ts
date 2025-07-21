@@ -29,4 +29,22 @@ export class DashboardService {
             quantidade: r._count._all,
         }))
     }
+
+    async contarLocaisPorRegiao() {
+        const resultado = await this.prisma.place.groupBy({
+            by: ['localization'],
+            _count: {
+                _all: true,
+            },
+            orderBy: {
+                localization: 'asc',
+            },
+        })
+
+        return resultado.map(r => ({
+            location: r.localization,
+            quantidade: r._count._all
+        }))
+    }
+   
 }
