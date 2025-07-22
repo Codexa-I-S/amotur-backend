@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterUserDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt' 
 import { LoginDto } from './dto/login.dto';
+import { Users } from '@prisma/client';
 @Injectable()
 export class AuthService {
     constructor(
@@ -41,6 +42,10 @@ export class AuthService {
 
       if(!user) throw new UnauthorizedException('Credencíais inválidas!')
 
+      if(!user.password) throw new UnauthorizedException(
+        'Usuário não possui senha definida (Logar com o Google)'
+      )
+
       const isMatch = await bcrypt.compare(password, user.password)
 
       if(!isMatch) throw new UnauthorizedException('Credencíais inválidas!')
@@ -61,6 +66,32 @@ export class AuthService {
       return {
         access_token: this.jwt.sign(payload)
       }
+    }
+
+    async findOrCreateGoogleUser({ googleId, email }){
+        let user = await this.prisma.users.findUnique({
+          where: { googleId }
+        })
+
+        if(!user){
+          user = await this.prisma.users.create({
+            data: {
+              email,
+              googleId
+            }
+          })
+        }
+
+        return user
+    }
+
+    async signJwtForUser(user: Users){
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role
+      }
+      return this.jwt.sign(payload)
     }
 
 }

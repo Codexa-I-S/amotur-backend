@@ -3,11 +3,16 @@ import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { GoogleService } from './google-auth.service';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService){}
+    constructor(
+        private authService: AuthService,
+        private googleService: GoogleService
+    ){}
+
     @ApiOperation({summary: 'Registrar um usuário'})
     @ApiResponse({status:201, description: "Usuário criado com sucesso!!"})
     @ApiResponse({status:409, description: "Email ja esta em uso"})
@@ -22,5 +27,14 @@ export class AuthController {
     @Post('login')
     async loginUser(@Body() credentials: LoginDto): Promise<LoginResponseDto>{
         return this.authService.login(credentials)
+    }
+
+    @Post('google')
+    async loginWithGoogle(@Body() body: { idToken: string }){
+        const access_token = await this.googleService.verify(
+            body.idToken
+        )
+
+        return access_token
     }
 }
