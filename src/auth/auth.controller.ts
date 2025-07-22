@@ -5,6 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GoogleService } from './google-auth.service';
+import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -30,6 +31,10 @@ export class AuthController {
     }
 
     @Post('google')
+    @ApiOperation({ summary: 'Login com Google' })
+    @ApiBody({ type: GoogleLoginDto, description: 'Token ID do Google (JWT)' })
+    @ApiResponse({ status: 200, description: 'Login com sucesso. Retorna o access_token.' })
+    @ApiResponse({ status: 401, description: 'Token inválido ou expirado.' })
     async loginWithGoogle(@Body() body: { idToken: string }){
         const access_token = await this.googleService.verify(
             body.idToken
