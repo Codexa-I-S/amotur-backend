@@ -239,6 +239,8 @@ export class PlaceController {
         }
     }
 
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard,AdminGuard)
     @Get('page')
     @ApiOperation({ summary: 'Listar Todos os locais por paginação' })
     @ApiQuery({ name: 'page', type: Number, description: 'Numero da página', example: "1" })
