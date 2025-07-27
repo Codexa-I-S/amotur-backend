@@ -10,6 +10,7 @@ import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { AdminGuard } from 'src/auth/admin.guard';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { PlaceType } from '@prisma/client';
 
 @ApiBearerAuth()
 @Controller('place')
@@ -31,8 +32,8 @@ export class PlaceController {
             type: 'object',
             properties: {
                 name: { type: 'string', example: 'luar Do Sertão' },
-                localization: { type: 'string', example: 'amontada' },
-                type: { type: 'string', example: 'Pousada' },
+                localization: { type: 'string', enum: ['ICARAI', 'MOITAS', 'CAETANOS', 'FLECHEIRAS'], example: 'ICARAI' },
+                type: { type: 'string', enum: ['TURISTICO', 'HOTEL', 'POUSADA', 'RESTAURANTE', 'PESTISCARIA', 'BAR'], example: 'POUSADA' },
                 description: { type: 'string', example: 'A melhor pousada' },
                 coordinates: { type: 'string', example: { "lat": 1236363, "lng": -4253674 } },
                 contacts: { type: 'string', example: { "telefone": "(88)9458484247", "email": "luardosertao@gamil.com", "site": "www.luardoSertao.com" } },
@@ -114,14 +115,17 @@ export class PlaceController {
 
     @Get()
     @ApiOperation({ summary: 'Listar Todos os locais por tipo' })
-    @ApiQuery({ name: 'type', type: String, description: 'Tipo do local', example: "hotel,restaurante" })
+    @ApiQuery({ name: 'type', type:String, enum:['TURISTICO', 'HOTEL', 'POUSADA', 'RESTAURANTE', 'PESTISCARIA', 'BAR'], description: 'Tipo do local', })
     @ApiResponse({ status: 200, description: 'Listar locais pelo o tipo retornada com sucesso!!' })
     @ApiResponse({ status: 400, description: "Dados inválidos" })
     @HttpCode(HttpStatus.OK)
 
     findAllfromTyoe(@Query('type') type?: string) {
         if (type) {
-            return this.placeService.findAllFromType(type)
+            
+    const typeArray = type.split(',') as PlaceType[];
+
+         return this.placeService.findAllFromType(typeArray)
         } else {
             throw new HttpException('type inválidos', HttpStatus.BAD_REQUEST);
         }

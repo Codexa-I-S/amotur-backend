@@ -16,13 +16,29 @@ datasource db {
 model Place {
   id String  @id @default(uuid())
   name String
-  type String
-  localization String
+  type PlaceType
+  localization PlaceRegion
   description String
   coordinates Json @unique
   contacts  Json
   logo String
   images String[]
+}
+
+enum PlaceType {
+  TURISTICO
+  HOTEL
+  POUSADA
+  RESTAURANTE
+  PESTISCARIA
+  BAR
+}
+
+enum PlaceRegion {
+  ICARAI
+  MOITAS
+  CAETANOS
+  FLECHEIRAS
 }
 
 model Users {

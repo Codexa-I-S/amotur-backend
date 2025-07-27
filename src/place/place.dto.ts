@@ -1,7 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger"
 import { PartialType } from "@nestjs/swagger"
+import { PlaceRegion, PlaceType } from "@prisma/client";
 import { Type } from "class-transformer";
-import { IsArray, IsEmail, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUrl, ValidateNested } from "class-validator"
+import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUrl, ValidateNested } from "class-validator"
 
 class Coordinates {
 
@@ -36,15 +37,15 @@ export class createplaceDto {
   @IsNotEmpty({message:"O nome é obrigatório"})
   name: string;
 
-  @ApiProperty({example:"pousada",description:"tipo do lugar"})
-  @IsString({ message: "O tipo deve ser uma string" })
+  @ApiProperty({example:"POUSADA",description:"tipo do lugar"})
+  @IsEnum(PlaceType)
   @IsNotEmpty({message:"O tipo é obrigatório"})
-  type: string;
+  type: PlaceType;
 
-  @ApiProperty({example:"pousada",description:"tipo do lugar"})
-  @IsString({ message: "O tipo deve ser uma string" })
-  @IsNotEmpty({message:"O tipo é obrigatório"})
-  localization: string;
+  @ApiProperty({example:"AMONTADA",description:"localização do lugar"})
+  @IsEnum(PlaceRegion)
+  @IsNotEmpty({message:"A localização é obrigatório"})
+  localization: PlaceRegion;
 
   @ApiProperty({example:"um lugar bom",description:"descrição do lugar"})
   @IsString({ message: "A descrição deve ser uma string" })
