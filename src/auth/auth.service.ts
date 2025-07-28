@@ -5,6 +5,7 @@ import { RegisterUserDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt' 
 import { LoginDto } from './dto/login.dto';
 import { Users } from '@prisma/client';
+import { DateTime } from 'luxon'
 @Injectable()
 export class AuthService {
     constructor(
@@ -58,12 +59,10 @@ export class AuthService {
         credentials.email,
         credentials.password
       )
-      const hoje = new Date();
 
-      const dia = hoje.getDate();
-      const mes = String(hoje.getMonth() + 1).padStart(2,'0');
-      const ano= hoje.getFullYear();
-      const data = `${ano}-${mes}-${dia}`;
+      const data_hora = DateTime.now().setZone('America/Sao_Paulo').toISO(); 
+      const data=DateTime.fromISO(data_hora).toISODate();
+      
       await this.prisma.users.update({
         where: { id: user.id },
         data: { lastLoginAt: data },
@@ -93,12 +92,10 @@ export class AuthService {
             }
           })
         }
-      const hoje = new Date();
 
-      const dia = hoje.getDate();
-      const mes = String(hoje.getMonth() + 1).padStart(2,'0');
-      const ano= hoje.getFullYear();
-      const data = `${ano}-${mes}-${dia}`;
+      const data_hora = DateTime.now().setZone('America/Sao_Paulo').toISO(); 
+      const data=DateTime.fromISO(data_hora).toISODate();
+     
       await this.prisma.users.update({
         where: { id: user.id },
         data: { lastLoginAt: data },
