@@ -62,8 +62,7 @@ export class AuthService {
 
       const data_hora = DateTime.now().setZone('America/Sao_Paulo').toISO(); 
       const data=DateTime.fromISO(data_hora).toISODate();
-      console.log(data_hora)
-      console.log(data)
+      
       await this.prisma.users.update({
         where: { id: user.id },
         data: { lastLoginAt: data },
