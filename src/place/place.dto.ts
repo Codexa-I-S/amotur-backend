@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger"
 import { PartialType } from "@nestjs/swagger"
 import { PlaceRegion, PlaceType } from "@prisma/client";
 import { Type } from "class-transformer";
-import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUrl, ValidateNested } from "class-validator"
+import { ArrayNotEmpty, IsArray, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUrl, ValidateNested } from "class-validator"
 
 class Coordinates {
 
@@ -31,6 +31,13 @@ export class Contacts {
   @IsUrl()
   instagram?: string;
 }
+class ImageObject {
+    @IsString()
+    url: string
+    @IsString()
+    public_id: string
+}
+
 export class createplaceDto {
   @ApiProperty({example:"luar do sertão",description:"nome do lugar"})
   @IsString({ message: "O nome deve ser uma string" })
@@ -63,15 +70,15 @@ export class createplaceDto {
   contacts: Contacts;
 
   @ApiProperty({example:"http://luarDoSertao.com/logo.png",description:"logo do lugar"})
-  @IsString({ message: "O link da logo deve ser uma string" })
-  @IsUrl({},{message:"A logo deve ser uma  url"})
-  logo: string 
+   @Type(() => ImageObject)
+  logo: ImageObject
 
   @ApiProperty({example:["http://img1.jpg","http://img2.jpg","http://img3.jpg"],description:"imagens do lugar"})
   @IsArray()
-  @IsString({each: true, message: "Cada link de imagem deve ser uma string" }) 
-  @IsNotEmpty({each:true, message:"Cada link deve ser obrigatório"})
-  images: string[]
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => ImageObject)
+  images: ImageObject[]
 }
 
 export class updateplaceDto extends PartialType(createplaceDto)   {}
