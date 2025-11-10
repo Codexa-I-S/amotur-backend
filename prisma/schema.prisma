@@ -21,8 +21,8 @@ model Place {
   description String
   coordinates Json @unique
   contacts  Json
-  logo String
-  images String[]
+  logo Json
+  images Json[]
 }
 
 enum PlaceType {

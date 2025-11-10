@@ -1,16 +1,21 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Place } from '@prisma/client';
-import { PrismaClient } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { createplaceDto, updateplaceDto } from './place.dto';
 
 import { PlaceType } from '@prisma/client';
+import { UploadService } from 'src/upload/upload.service';
+import { ImageObject } from './types/image_object';
 
 
 @Injectable()
 export class PlaceService {
 
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private cloudinary: UploadService
+
+    ) { }
 
     async create(dto: createplaceDto): Promise<Place> {
         const { coordinates, contacts, ...rest } = dto;
@@ -38,7 +43,9 @@ export class PlaceService {
                     ...(contacts.email && { email: contacts.email }),
                     ...(contacts.site && { site: contacts.site }),
                 }
-            })
+            }),
+            logo:dto.logo as ImageObject,
+            images:dto.images as ImageObject[]
         };
         return this.prisma.place.create({ data });
     }
@@ -72,8 +79,17 @@ export class PlaceService {
         if (!foundId) {
             throw new NotFoundException(`Local com esse ID ${id} não encontrado!`)
         }
-        const { coordinates, contacts, ...rest } = dto;
+        //apaga as imagens que já existe no cloudinary pra atualizar
+        const images = foundId.images as ImageObject[]
+
+        images.push(foundId.logo as ImageObject)
         
+        await Promise.all(images.map(
+            (image) => this.cloudinary.deleteImage(image.public_id)
+        ))
+
+        const { coordinates, contacts, ...rest } = dto;
+
         const data: Prisma.PlaceUpdateInput = {
             ...rest,
             ...(coordinates && {
@@ -89,46 +105,64 @@ export class PlaceService {
                     ...(contacts.site && { site: contacts.site }),
                 },
             }),
+            logo:dto.logo as ImageObject,
+            images:dto.images as ImageObject[]
         };
         return await this.prisma.place.update({ where: { id }, data })
     }
 
-    async remove(id: string): Promise<Place | null> {
-        try {
-            return await this.prisma.place.delete({ where: { id } })
-        } catch {
-            throw new NotFoundException(`Local com esse ID ${id} não encontrado!`)
-        }
+    async remove(id: string): Promise<Place> {
+        //verifica se existe o local
+        const place = await this.prisma.place.findUnique({
+            where: { id }
+        })
+        if (!place) throw new BadRequestException('Local não encontrado!')
+
+        //apaga as imagens no cloudinary
+        const images = place.images as ImageObject[]
+
+        images.push(place.logo as ImageObject)
+        
+        await Promise.all(images.map(
+            (image) => this.cloudinary.deleteImage(image.public_id)
+        ))
+
+        // apaga o local no banco de dados
+        const result = await this.prisma.place.delete({
+            where: { id }
+        })
+
+        return result
     }
 
     async pagination(page: number, limit: number) {
-    const skip = (page - 1) * limit;
+        const skip = (page - 1) * limit;
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.place.findMany({
-        skip,
-        take: limit,
-        orderBy: {
-          name: 'asc', 
-        },
-        select:{
-            id:true,
-            name:true,
-            type:true,
-            localization:true
-        }
-      }),
-      this.prisma.place.count(),
-    ]);
+        const [items, total] = await this.prisma.$transaction([
+            this.prisma.place.findMany({
+                skip,
+                take: limit,
+                orderBy: {
+                    name: 'asc',
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    type: true,
+                    localization: true
+                }
+            }),
+            this.prisma.place.count(),
+        ]);
 
-    return {
-      data: items,
-      meta: {
-        total,
-        page,
-        lastPage: Math.ceil(total / limit),
-      },
-    };
-  }
+        return {
+            data: items,
+            meta: {
+                total,
+                page,
+                lastPage: Math.ceil(total / limit),
+            },
+        };
+    }
 
 }
