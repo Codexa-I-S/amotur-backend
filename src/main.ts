@@ -1,15 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 
 import * as basicAuth from "express-basic-auth"
 import { UserService } from './user/user.service';
+import { error } from 'console';
 
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const password = process.env.SWAGGER_PASSWORD || 'password';
+  const password = process.env.SWAGGER_PASSWORD;
+  const door = process.env.PORT
+
+  if(!password) throw new error("Senha do Swagger não encotrada no .env")
+  if(!door) throw new error("Porta não encontrada no .env")
+
+
+  
   
   
   app.use(
@@ -47,7 +55,8 @@ async function bootstrap() {
   origin: [process.env.FRONTEND_URL , 'http://localhost:3000'],
   credentials:true
 }); 
-  await app.listen(process.env.PORT || 3123);
+  await app.listen(door);  
+  Logger.log(`🚀 API Swagger: http://localhost:${door}/api`);
   
 }
 bootstrap();
