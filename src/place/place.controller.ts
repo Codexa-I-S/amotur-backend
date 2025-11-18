@@ -2,15 +2,12 @@ import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpExcep
 import { PlaceService } from './place.service';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import { extname } from 'path';
 import { UploadService } from 'src/upload/upload.service';
-import { diskStorage } from 'multer';
-import { createplaceDto, updateplaceDto } from './place.dto';
+import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { AdminGuard } from 'src/auth/admin.guard';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
 import { PlaceRegion, PlaceType } from '@prisma/client';
+import { ImageObject } from './types/image_object';
 
 @ApiBearerAuth()
 @Controller('place')
@@ -19,7 +16,7 @@ export class PlaceController {
     constructor(private placeService: PlaceService, private uploadService: UploadService) { }
 
     @ApiBearerAuth()
-    @UseGuards(JwtAuthGuard,AdminGuard)
+    @UseGuards(JwtAuthGuard, AdminGuard)
     @Post()
     @ApiOperation({ summary: 'Cria um local' })
     @ApiResponse({ status: 201, description: "Local criado com sucesso!!" })
@@ -47,50 +44,33 @@ export class PlaceController {
     })
     @UseInterceptors(
         AnyFilesInterceptor({
-            storage: diskStorage({
-                filename: (req, file, cb) => {
-                    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                    cb(null, unique + extname(file.originalname));
-                },
-            }),
+            storage: memoryStorage(),
             limits: {
-                fileSize: 800 * 1024, // 800kb
+                fileSize: 5 * 1024 * 1024, // 5 Mb
             },
         }),
     )
     async createPlace(@UploadedFiles() files: Array<Express.Multer.File>, @Body() body: any,) {
-        try {
-            const logoFile = files.find((file) => file.fieldname === 'logo');
-            const photoFiles = files.filter((file) => file.fieldname === 'photos');
-            // Aqui você pode fazer o upload (ex: Cloudinary) e salvar no banco
-            if (!logoFile) {
-                throw new BadRequestException('Logo é obrigatória');
-            }
-            const logoUrl = await this.uploadService.uploadImage(logoFile.path);
-            if (!logoUrl) {
-                throw new BadRequestException('Logo é obrigatória');
-            }
-            const uploadedImages = await Promise.all(photoFiles.map(f => this.uploadService.uploadImage(f.path)));
-            const photoUrls = uploadedImages.filter((url): url is string => !!url);
-            const parsedBody = {
+        const logoFile = files.find((file) => file.fieldname === 'logo');
+        const photoFiles = files.filter((file) => file.fieldname === 'photos');
+        if (!logoFile) {
+            throw new BadRequestException('Logo é obrigatória');
+        }
+        const logoUrl = await this.uploadService.uploadImage(logoFile.buffer);
+        if (!logoUrl) {
+            throw new BadRequestException('Logo é obrigatória');
+        }
+        const uploadedImages = await Promise.all(photoFiles.map(f => this.uploadService.uploadImage(f.buffer)));
+        const photoUrls = uploadedImages.filter((url): url is ImageObject => !!url);
+        const parsedBody = {
             ...body,
             coordinates: JSON.parse(body.coordinates),
             contacts: JSON.parse(body.contacts),
-            logo: logoUrl,
-            images: photoUrls,
-            };
+            logo: logoUrl as ImageObject,
+            images: photoUrls as ImageObject[],
+        };
+        return this.placeService.create(parsedBody)
 
-            const dto = plainToInstance(createplaceDto, parsedBody);
-            const errors = await validate(dto, { whitelist: true, forbidNonWhitelisted: true });
-
-            if (errors.length > 0) {
-            console.error(errors);
-            throw new BadRequestException('Dados inválidos: ' + JSON.stringify(errors));
-            }            
-            return this.placeService.create(dto)
-        } catch (error) {
-            throw new HttpException('Dados inválidos', HttpStatus.BAD_REQUEST);
-        }
     }
 
     @Get('all')
@@ -115,24 +95,23 @@ export class PlaceController {
 
     @Get()
     @ApiOperation({ summary: 'Listar Todos os locais por tipo' })
-    @ApiQuery({ name: 'type', type:String, enum: PlaceType, description: 'Tipo do local', })
+    @ApiQuery({ name: 'type', type: String, enum: PlaceType, description: 'Tipo do local', })
     @ApiResponse({ status: 200, description: 'Listar locais pelo o tipo retornada com sucesso!!' })
     @ApiResponse({ status: 400, description: "Dados inválidos" })
     @HttpCode(HttpStatus.OK)
-
     findAllfromTyoe(@Query('type') type?: string) {
         if (type) {
-            
-    const typeArray = type.split(',') as PlaceType[];
 
-         return this.placeService.findAllFromType(typeArray)
+            const typeArray = type.split(',') as PlaceType[];
+
+            return this.placeService.findAllFromType(typeArray)
         } else {
             throw new HttpException('type inválidos', HttpStatus.BAD_REQUEST);
         }
     }
 
     @ApiBearerAuth()
-    @UseGuards(JwtAuthGuard,AdminGuard)
+    @UseGuards(JwtAuthGuard, AdminGuard)
     @Put('id=:id')
     @ApiOperation({ summary: 'Atualiza um local' })
     @ApiResponse({ status: 200, description: 'Local atualizado com sucesso!' })
@@ -167,14 +146,9 @@ export class PlaceController {
     })
     @UseInterceptors(
         AnyFilesInterceptor({
-            storage: diskStorage({
-                filename: (req, file, cb) => {
-                    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                    cb(null, unique + extname(file.originalname));
-                },
-            }),
+            storage: memoryStorage(),
             limits: {
-                fileSize: 500 * 1024, // 500kb
+                fileSize: 800 * 1024, // 800kb
             },
         }),
     )
@@ -187,49 +161,50 @@ export class PlaceController {
             const logoFile = files.find((file) => file.fieldname === 'logo');
             const photoFiles = files.filter((file) => file.fieldname === 'photos');
 
-            let logoUrl: string | undefined;
+            let logoUrl: ImageObject | undefined;
             if (logoFile) {
-                logoUrl = await this.uploadService.uploadImage(logoFile.path);
+                logoUrl = await this.uploadService.uploadImage(logoFile.buffer);
             }
 
-            let photoUrls: string[] | undefined;
+            let photoUrls: ImageObject[] | undefined;
             if (photoFiles.length > 0) {
                 const uploadedImages = await Promise.all(
-                    photoFiles.map((f) => this.uploadService.uploadImage(f.path)),
+                    photoFiles.map((f) => this.uploadService.uploadImage(f.buffer)),
                 );
-                photoUrls = uploadedImages.filter((url): url is string => !!url);
+                photoUrls = uploadedImages.filter((url): url is ImageObject => !!url);
             }
             const rawData = {
-            ...body,
-            ...(body.coordinates && { coordinates: JSON.parse(body.coordinates) }),
-            ...(body.contacts && { contacts: JSON.parse(body.contacts) }),
-            ...(logoUrl && { logo: logoUrl }),
-            ...(photoUrls && photoUrls.length > 0 && { images: photoUrls }),
+                ...body,
+                ...(body.coordinates && { coordinates: JSON.parse(body.coordinates) }),
+                ...(body.contacts && { contacts: JSON.parse(body.contacts) }),
+                ...(logoUrl && { logo: logoUrl }),
+                ...(photoUrls && photoUrls.length > 0 && { images: photoUrls }),
             };
-
-            // Transforma em instância do DTO de update
-            const dto = plainToInstance(updateplaceDto, rawData);
-
-            // Valida apenas os campos presentes
-            const errors = await validate(dto, {
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            skipMissingProperties: true, // <- ESSENCIAL para DTO parcial
-            });
-
-            if (errors.length > 0) {
-            console.error(errors);
-            throw new BadRequestException('Dados inválidos: ' + JSON.stringify(errors));
-            }
-
-            return this.placeService.update(id, dto);
+            
+                        // // Transforma em instância do DTO de update
+                        // const dto = plainToInstance(updateplaceDto, rawData);
+            
+                        // // Valida apenas os campos presentes
+                        // const errors = await validate(dto, {
+                        // whitelist: true,
+                        // forbidNonWhitelisted: true,
+                        // skipMissingProperties: true, // <- ESSENCIAL para DTO parcial
+                        // });
+            
+                        // if (errors.length > 0) {
+                        // console.error(errors);
+                        // throw new BadRequestException('Dados inválidos: ' + JSON.stringify(errors));
+                        // }
+            
+            return this.placeService.update(id, rawData);
         } catch (error) {
-            throw new HttpException('Dados inválidos', HttpStatus.BAD_REQUEST);
+            console.log(error)
+            throw new HttpException('erro de servidor', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @ApiBearerAuth()
-    @UseGuards(JwtAuthGuard,AdminGuard)
+    @UseGuards(JwtAuthGuard, AdminGuard)
     @Delete('id=:id')
     @ApiOperation({ summary: 'Deleta um local' })
     @ApiResponse({ status: 200, description: "Local deletado com sucesso!!" })
@@ -245,7 +220,7 @@ export class PlaceController {
     }
 
     @ApiBearerAuth()
-    @UseGuards(JwtAuthGuard,AdminGuard)
+    @UseGuards(JwtAuthGuard, AdminGuard)
     @Get('page')
     @ApiOperation({ summary: 'Listar Todos os locais por paginação' })
     @ApiQuery({ name: 'page', type: Number, description: 'Numero da página', example: "1" })
@@ -257,8 +232,6 @@ export class PlaceController {
         @Query('page') page = '1',
         @Query('limit') limit = '10',
     ) {
-    return this.placeService.pagination(+page, +limit);
-  }
+        return this.placeService.pagination(+page, +limit);
+    }
 }
-
-
