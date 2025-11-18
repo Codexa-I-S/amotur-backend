@@ -148,7 +148,7 @@ export class PlaceController {
         AnyFilesInterceptor({
             storage: memoryStorage(),
             limits: {
-                fileSize: 800 * 1024, // 800kb
+                fileSize: 5 * 1024 * 1024, // 5mb
             },
         }),
     )
