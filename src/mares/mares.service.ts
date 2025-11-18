@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 @Injectable()
 export class MaresService implements OnModuleInit {
-    constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async onModuleInit() {
     // Este método será chamado assim que o módulo for inicializado
@@ -61,9 +61,9 @@ export class MaresService implements OnModuleInit {
       }
     }
   }
-    async getMaresDeUmaData(data: string): Promise<{data:string;dados:Array<{hora:string;altura:number}>}| null> {
+  async getMaresDeUmaData(data: string): Promise<{ data: string; dados: Array<{ hora: string; altura: number }> } | null> {
 
-        const maresDoDia = await this.prisma.mare.findMany({
+    const maresDoDia = await this.prisma.mare.findMany({
       where: {
         // Filtra por data. No Prisma, um campo DateTime @db.Date no schema
         // permite a comparação direta com um objeto Date.

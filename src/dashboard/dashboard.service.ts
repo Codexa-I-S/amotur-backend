@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class DashboardService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService) { }
 
     async contarLugares(): Promise<number> {
         return this.prisma.place.count()
@@ -47,14 +47,14 @@ export class DashboardService {
             quantidade: r._count._all
         }))
     }
-  
-  async countLoggedInUsersForDay(date: string ):Promise<number> {
-const count = await this.prisma.users.count({
-    where: {
-        lastLoginAt: date
 
-    },
-});
-return count
-  }  
+    async countLoggedInUsersForDay(date: string): Promise<number> {
+        const count = await this.prisma.users.count({
+            where: {
+                lastLoginAt: date
+
+            },
+        });
+        return count
+    }
 }
