@@ -157,7 +157,6 @@ export class PlaceController {
         @UploadedFiles() files: Array<Express.Multer.File>,
         @Body() body: any,
     ) {
-        try {
             const logoFile = files.find((file) => file.fieldname === 'logo');
             const photoFiles = files.filter((file) => file.fieldname === 'photos');
 
@@ -197,10 +196,6 @@ export class PlaceController {
                         // }
             
             return this.placeService.update(id, rawData);
-        } catch (error) {
-            console.log(error)
-            throw new HttpException('erro de servidor', HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     @ApiBearerAuth()
