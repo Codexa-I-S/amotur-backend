@@ -44,8 +44,8 @@ export class PlaceService {
                     ...(contacts.site && { site: contacts.site }),
                 }
             }),
-            logo:dto.logo as ImageObject,
-            images:dto.images as ImageObject[]
+            logo: dto.logo as ImageObject,
+            images: dto.images as ImageObject[]
         };
         return this.prisma.place.create({ data });
     }
@@ -79,19 +79,33 @@ export class PlaceService {
         if (!foundId) {
             throw new NotFoundException(`Local com esse ID ${id} não encontrado!`)
         }
-        //apaga as imagens que já existe no cloudinary pra atualizar
-        const images = foundId.images as ImageObject[]
 
-        images.push(foundId.logo as ImageObject)
+        const { coordinates, contacts,logo, images, ...rest } = dto;
+
+        const cleanRest = Object.fromEntries(
+            Object.entries(rest).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+        );
+
+        let newImages : ImageObject[] | undefined;
+
+        if(images && images.length>0){
+            newImages = (images as ImageObject[]).length > 0 ? (images as ImageObject[]) : undefined;
+            const oldImages = foundId.images as ImageObject[]
+            await Promise.all(oldImages.map(
+                (image) => this.cloudinary.deleteImage(image.public_id)
+            ))
+        }
         
-        await Promise.all(images.map(
-            (image) => this.cloudinary.deleteImage(image.public_id)
-        ))
+        let newLogo : ImageObject | undefined 
+        if(logo && logo.url){
+            newLogo = (logo as ImageObject).url ? (logo as ImageObject) : undefined;
+            const oldlogo = foundId.logo as ImageObject
+            await this.cloudinary.deleteImage(oldlogo.public_id)
+        }
 
-        const { coordinates, contacts, ...rest } = dto;
 
         const data: Prisma.PlaceUpdateInput = {
-            ...rest,
+            ...cleanRest,
             ...(coordinates && {
                 coordinates: {
                     lat: coordinates.lat,
@@ -105,8 +119,8 @@ export class PlaceService {
                     ...(contacts.site && { site: contacts.site }),
                 },
             }),
-            logo:dto.logo as ImageObject,
-            images:dto.images as ImageObject[]
+        ...(newLogo && { logo: newLogo }),
+        ...(newImages && { images: newImages }),
         };
         return await this.prisma.place.update({ where: { id }, data })
     }

@@ -8,6 +8,9 @@ import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { AdminGuard } from 'src/auth/admin.guard';
 import { PlaceRegion, PlaceType } from '@prisma/client';
 import { ImageObject } from './types/image_object';
+import { plainToInstance } from 'class-transformer';
+import { updateplaceDto } from './place.dto';
+import { validate } from 'class-validator';
 
 @ApiBearerAuth()
 @Controller('place')
@@ -157,45 +160,48 @@ export class PlaceController {
         @UploadedFiles() files: Array<Express.Multer.File>,
         @Body() body: any,
     ) {
-            const logoFile = files.find((file) => file.fieldname === 'logo');
-            const photoFiles = files.filter((file) => file.fieldname === 'photos');
+        const logoFile = files.find((file) => file.fieldname === 'logo');
+        const photoFiles = files.filter((file) => file.fieldname === 'photos');
 
-            let logoUrl: ImageObject | undefined;
-            if (logoFile) {
-                logoUrl = await this.uploadService.uploadImage(logoFile.buffer);
-            }
+        let logoUrl: ImageObject | undefined;
+        if (logoFile && logoFile.buffer) {
+            logoUrl = await this.uploadService.uploadImage(logoFile.buffer);
+        }
 
-            let photoUrls: ImageObject[] | undefined;
-            if (photoFiles.length > 0) {
-                const uploadedImages = await Promise.all(
-                    photoFiles.map((f) => this.uploadService.uploadImage(f.buffer)),
-                );
-                photoUrls = uploadedImages.filter((url): url is ImageObject => !!url);
-            }
-            const rawData = {
-                ...body,
-                ...(body.coordinates && { coordinates: JSON.parse(body.coordinates) }),
-                ...(body.contacts && { contacts: JSON.parse(body.contacts) }),
-                ...(logoUrl && { logo: logoUrl }),
-                ...(photoUrls && photoUrls.length > 0 && { images: photoUrls }),
-            };
-            
-                        // // Transforma em instância do DTO de update
-                        // const dto = plainToInstance(updateplaceDto, rawData);
-            
-                        // // Valida apenas os campos presentes
-                        // const errors = await validate(dto, {
-                        // whitelist: true,
-                        // forbidNonWhitelisted: true,
-                        // skipMissingProperties: true, // <- ESSENCIAL para DTO parcial
-                        // });
-            
-                        // if (errors.length > 0) {
-                        // console.error(errors);
-                        // throw new BadRequestException('Dados inválidos: ' + JSON.stringify(errors));
-                        // }
-            
-            return this.placeService.update(id, rawData);
+        let photoUrls: ImageObject[] | undefined;
+        if (photoFiles.length > 0 && photoFiles[0].buffer) {
+            const uploadedImages = await Promise.all(
+                photoFiles.map((f) => this.uploadService.uploadImage(f.buffer)),
+            );
+            photoUrls = uploadedImages.filter((url): url is ImageObject => !!url);
+        }
+        
+        const cleanedBody = Object.fromEntries(
+            Object.entries(body).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+        );
+        
+        const rawData = {
+            ...cleanedBody,
+            ...(body.coordinates && { coordinates: JSON.parse(body.coordinates) }),
+            ...(body.contacts && { contacts: JSON.parse(body.contacts) }),
+            ...(logoUrl && { logo: logoUrl }),
+            ...(photoUrls && photoUrls.length > 0 && { images: photoUrls }),
+        };
+
+        const dto = plainToInstance(updateplaceDto, rawData);
+
+        const errors = await validate(dto, {
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            skipMissingProperties: true,
+        });
+
+        if (errors.length > 0) {
+            console.error(errors);
+            throw new BadRequestException('Dados inválidos: ' + JSON.stringify(errors));
+        }
+
+        return this.placeService.update(id, rawData);
     }
 
     @ApiBearerAuth()

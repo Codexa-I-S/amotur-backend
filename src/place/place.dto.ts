@@ -70,7 +70,8 @@ export class createplaceDto {
   contacts: Contacts;
 
   @ApiProperty({example:"http://luarDoSertao.com/logo.png",description:"logo do lugar"})
-   @Type(() => ImageObject)
+  @ValidateNested()
+  @Type(() => ImageObject)
   logo: ImageObject
 
   @ApiProperty({example:["http://img1.jpg","http://img2.jpg","http://img3.jpg"],description:"imagens do lugar"})
